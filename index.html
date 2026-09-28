@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>星降る夜をこえて</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -177,8 +177,8 @@
 
   #topCornerControls {
     position: absolute;
-    top: 14px;
-    right: 14px;
+    top: calc(14px + env(safe-area-inset-top, 0px));
+    right: calc(14px + env(safe-area-inset-right, 0px));
     display: flex;
     gap: 8px;
     z-index: 40;
@@ -187,8 +187,8 @@
     background: rgba(10,14,39,0.35);
   }
   #muteBtn, #pauseBtn, #volumeBtn {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     border: none;
     background: rgba(20,26,61,0.7);
@@ -199,6 +199,44 @@
     justify-content: center;
     cursor: pointer;
     touch-action: manipulation;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 28px;
+    background: transparent;
+    touch-action: none;
+    margin: 0;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.25);
+  }
+  input[type="range"]::-moz-range-track {
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.25);
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--star-gold);
+    border: 2px solid #0a0e27;
+    margin-top: -9px;
+    cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--star-gold);
+    border: 2px solid #0a0e27;
+    cursor: pointer;
   }
 
   @media (min-width: 720px) {
