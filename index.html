@@ -1087,7 +1087,7 @@
       vnBgmPlayer.currentTime = 0;
       vnBgmPlayer.src = track;
       vnBgmPlayer.load();
-      vnBgmPlayer.volume = muted ? 0 : bgmVolume * 0.875;
+      if (vnGainNode) vnGainNode.gain.value = muted ? 0 : bgmVolume * 0.875; else vnBgmPlayer.volume = muted ? 0 : bgmVolume * 0.875;
       vnBgmPlayer.play().catch(() => {});
     } else {
       vnBgmPlayer.pause();
@@ -1429,6 +1429,7 @@
   const BGM_VOL_KEY = 'dodge_game_bgm_vol';
   const SE_VOL_KEY = 'dodge_game_se_vol';
   let audioCtx = null, masterGain = null;
+  let bgmGainNode = null, vnGainNode = null;
   let muted = localStorage.getItem(MUTE_KEY) === '1';
   let bgmVolume = localStorage.getItem(BGM_VOL_KEY) !== null ? parseFloat(localStorage.getItem(BGM_VOL_KEY)) : 0.4;
   let seVolume = localStorage.getItem(SE_VOL_KEY) !== null ? parseFloat(localStorage.getItem(SE_VOL_KEY)) : 0.5;
@@ -1446,6 +1447,18 @@
     masterGain = audioCtx.createGain();
     masterGain.gain.value = muted ? 0 : seVolume;
     masterGain.connect(audioCtx.destination);
+
+    // iOS Safari ignores <audio>.volume entirely (it always plays at 1.0, adjustable only
+    // via the hardware buttons). Routing through Web Audio GainNodes is the standard
+    // workaround, and works consistently across platforms.
+    bgmGainNode = audioCtx.createGain();
+    bgmGainNode.gain.value = muted ? 0 : bgmVolume;
+    audioCtx.createMediaElementSource(mainBgmPlayer).connect(bgmGainNode).connect(audioCtx.destination);
+
+    vnGainNode = audioCtx.createGain();
+    vnGainNode.gain.value = muted ? 0 : bgmVolume * 0.875;
+    audioCtx.createMediaElementSource(vnBgmPlayer).connect(vnGainNode).connect(audioCtx.destination);
+
     updateMainBgm();
   }
 
@@ -1460,7 +1473,7 @@
       currentMainTrack = target;
       mainBgmPlayer.src = BGM_TRACKS[target];
     }
-    mainBgmPlayer.volume = muted ? 0 : bgmVolume * (target === 'title' ? 0.7 : 1);
+    if (bgmGainNode) bgmGainNode.gain.value = muted ? 0 : bgmVolume * (target === 'title' ? 0.7 : 1); else mainBgmPlayer.volume = muted ? 0 : bgmVolume * (target === 'title' ? 0.7 : 1);
     if (mainBgmPlayer.paused) mainBgmPlayer.play().catch(() => {});
   }
 
@@ -1469,8 +1482,8 @@
     localStorage.setItem(MUTE_KEY, muted ? '1' : '0');
     muteBtn.textContent = muted ? '🔇' : '🔊';
     if (masterGain) masterGain.gain.value = muted ? 0 : seVolume;
-    mainBgmPlayer.volume = muted ? 0 : bgmVolume * (currentMainTrack === 'title' ? 0.7 : 1);
-    vnBgmPlayer.volume = muted ? 0 : bgmVolume * 0.875;
+    if (bgmGainNode) bgmGainNode.gain.value = muted ? 0 : bgmVolume * (currentMainTrack === 'title' ? 0.7 : 1); else mainBgmPlayer.volume = muted ? 0 : bgmVolume * (currentMainTrack === 'title' ? 0.7 : 1);
+    if (vnGainNode) vnGainNode.gain.value = muted ? 0 : bgmVolume * 0.875; else vnBgmPlayer.volume = muted ? 0 : bgmVolume * 0.875;
   }
   bindTap(muteBtn, () => { initAudio(); setMuted(!muted); });
 
@@ -1484,8 +1497,8 @@
     bgmVolume = bgmVolSlider.value / 100;
     localStorage.setItem(BGM_VOL_KEY, String(bgmVolume));
     if (!muted) {
-      mainBgmPlayer.volume = bgmVolume * (currentMainTrack === 'title' ? 0.7 : 1);
-      vnBgmPlayer.volume = bgmVolume * 0.875;
+      if (bgmGainNode) bgmGainNode.gain.value = bgmVolume * (currentMainTrack === 'title' ? 0.7 : 1); else mainBgmPlayer.volume = bgmVolume * (currentMainTrack === 'title' ? 0.7 : 1);
+      if (vnGainNode) vnGainNode.gain.value = bgmVolume * 0.875; else vnBgmPlayer.volume = bgmVolume * 0.875;
     }
   });
   seVolSlider.addEventListener('input', () => {
